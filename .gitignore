@@ -1,5 +1,2 @@
 __pycache__/
-build/metadata/
-build/tokens/
-layers/
 .env
