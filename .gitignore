@@ -1,4 +1,4 @@
 __pycache__/
 .env
-layers\
-builds\
+layers/
+build/
