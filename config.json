@@ -11,7 +11,7 @@
         "Clothing",
         "Mouth"
     ],
-    "tokenQty": 50,
+    "maxToken": -1,
     "size": {
         "height": 1000,
         "width": 1000

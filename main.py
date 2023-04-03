@@ -8,10 +8,12 @@ from concurrent.futures import ThreadPoolExecutor
 import imageio
 import metadata
 import sys
+import random
 
 config = json.load(open("config.json"))
 
-MAX_WORKER = config['maxWorker']
+MAX_WORKER = int(config['maxWorker'])
+MAX_TOKEN = int(config['maxToken'])
 
 height, width = config['size']['height'], config['size']['width']
 
@@ -22,8 +24,11 @@ def layerSetup(layerOrder: list[str]) -> list[list[str]]:
         path = "./layers/" + layer
         layers.append([join(path, f)
                       for f in listdir(path) if isfile(join(path, f))])
-
-    return getUniqueCombinations(layers)
+    combinations = getUniqueCombinations(layers)
+    random.shuffle(combinations)
+    if(MAX_TOKEN != -1):
+        combinations = combinations[:MAX_TOKEN]
+    return combinations
 
 
 def getUniqueCombinations(layers: list[str]) -> list[list[str]]:
@@ -58,11 +63,10 @@ async def createNFT(layerCombinations, tokenQty=None):
         tasks = []
         i = 1
         if(config['tokenType'] == 'img'):
-
             for x in layerCombinations:
                 task = loop.run_in_executor(executor, generateToken, x, i)
                 tasks.append(task)
-                i += 1
+                i += 1  
         elif(config['tokenType'] == 'gif'):
             for x in layerCombinations:
                 task = loop.run_in_executor(executor, generateGIFToken, x, i)
