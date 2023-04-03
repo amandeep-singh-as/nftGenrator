@@ -11,7 +11,7 @@ import sys
 
 config = json.load(open("config.json"))
 
-MAX_WORKER = config['max_worker']
+MAX_WORKER = config['maxWorker']
 
 height, width = config['size']['height'], config['size']['width']
 
