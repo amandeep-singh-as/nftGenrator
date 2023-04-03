@@ -1,0 +1,16 @@
+{
+    "layerOrder": [
+        "Background",
+        "Body",
+        "Eyes",
+        "Nose",
+        "Hair",
+        "Clothing",
+        "Mouth"
+    ],
+    "tokenQty": 50,
+    "size": {
+        "height": 1000,
+        "width": 1000
+    }
+}
