@@ -1,4 +1,7 @@
 {
+    "projectName": "Project Name",
+    "description": "",
+    "tokenType": "img",
     "layerOrder": [
         "Background",
         "Body",
@@ -12,5 +15,7 @@
     "size": {
         "height": 1000,
         "width": 1000
-    }
+    },
+    "durationPerImage": 1,
+    "maxWorker": 10
 }
