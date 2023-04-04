@@ -1,87 +1,41 @@
 import json
-from os import listdir
-from os.path import isfile, join
-import itertools
-from PIL import Image
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-import imageio
-import metadata
-import sys
-import random
+from metadata import genrate_metadata
+from genrate import genrateGIFTokens, genrateTokens
+from utils import bColors
+from sys import exit
+from setup import layer_setup
 
 config = json.load(open("config.json"))
 
-MAX_WORKER = int(config['maxWorker'])
-MAX_TOKEN = int(config['maxToken'])
+MAX_WORKER = int(config["maxWorker"])
+TOKEN = config["tokenType"]
 
-height, width = config['size']['height'], config['size']['width']
-
-
-def layerSetup(layerOrder: list[str]) -> list[list[str]]:
-    layers = []
-    for layer in layerOrder:
-        path = "./layers/" + layer
-        layers.append([join(path, f)
-                      for f in listdir(path) if isfile(join(path, f))])
-    combinations = getUniqueCombinations(layers)
-    random.shuffle(combinations)
-    if(MAX_TOKEN != -1):
-        combinations = combinations[:MAX_TOKEN]
-    return combinations
-
-
-def getUniqueCombinations(layers: list[str]) -> list[list[str]]:
-    return list(itertools.product(*layers))
-
-
-def generateToken(layerSet, i):
-    print("Minting token ", i)
-    token = Image.new("RGBA", (height, width), (0, 0, 0, 0))
-
-    for layer in layerSet:
-        img = Image.open(layer).convert("RGBA").resize((height, width))
-        token.paste(img, (0, 0), img)
-    metadata.genrate_metadata(i, layerSet)
-    token.save("./build/tokens/NFT_" + str(i) + ".png")
-
-
-def generateGIFToken(layerSet, i):
-    print("Minting token ", i)
-    images = []
-
-    for layer in layerSet:
-        img = Image.open(layer).convert("RGBA").resize((height, width))
-        images.append(img)
-
-    imageio.mimsave("./build/tokens/NFT_" + str(i) + ".gif", images, duration=config['durationPerImage'])
-
-
-async def createNFT(layerCombinations, tokenQty=None):
+async def createNFT(combinations: list[list[str]], tokenQty: int | None = None):
     with ThreadPoolExecutor(max_workers=MAX_WORKER) as executor:
         loop = asyncio.get_event_loop()
-        tasks = []
-        i = 1
-        if(config['tokenType'] == 'img'):
-            for x in layerCombinations:
-                task = loop.run_in_executor(executor, generateToken, x, i)
-                tasks.append(task)
-                i += 1  
-        elif(config['tokenType'] == 'gif'):
-            for x in layerCombinations:
-                task = loop.run_in_executor(executor, generateGIFToken, x, i)
-                tasks.append(task)
-                i += 1
-        else:
-            print('Invalid Config')
-            sys.exit()
-        await asyncio.gather(*tasks)
+        tasks, metadata_tasks, token_version = [], [], 1
+        
+        for layers in combinations:
+            if(TOKEN == 'img'):
+                task = loop.run_in_executor(executor, genrateTokens, layers, token_version)
+            elif(TOKEN == 'gif'):
+                task = loop.run_in_executor(executor, genrateGIFTokens, layers, token_version)
+            else:
+                print(f"{bColors.bcolors.FAIL}Invalid Config {bColors.bcolors.ENDC}")
+                exit()
+            metadata_task = loop.run_in_executor(executor, genrate_metadata, layers, token_version)
 
+            tasks.append(task)
+            metadata_tasks.append(metadata_task)
+            token_version += 1
+        await asyncio.gather(*tasks)
+        await asyncio.gather(*metadata_tasks)
 
 def genrate():
-    layers = layerSetup(config['layerOrder'])
+    layers = layer_setup()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(createNFT(layers))
-
 
 genrate()

@@ -11,7 +11,7 @@ description = config['description']
 layer_order = config['layerOrder']
 date_var = date.today()
 
-def genrate_metadata(edition, attributes):
+def genrate_metadata(attributes, edition):
     template['name'] = project_name + " : " + str(edition)
     template['description'] = description
     template['edition'] = edition
